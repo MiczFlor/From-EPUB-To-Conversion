@@ -14,3 +14,9 @@ For the conversion I am using pandoc Version 1.16.0.2
 `./ConvertEpubChapter2DOCX.sh path/to/book.epub`
 
 `./ConvertEpubChapter2ICML.sh path/to/book.epub`
+
+## Run tests
+
+`cd tests`
+
+`./tests.sh`

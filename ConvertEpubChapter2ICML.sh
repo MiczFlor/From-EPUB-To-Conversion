@@ -7,21 +7,23 @@
 fileepub=$1
 echo "Converting file: " $fileepub
 
+# new file name without epub ending
+filename=$(echo $fileepub | cut -f 1 -d '.')
+
 # create temporary working directory
 if [ ! -d temp ]; then
   mkdir -p temp;
 fi
 
 # create ICML directory
-if [ ! -d $fileepub".ICML/Chapters" ]; then
-  mkdir -p $fileepub".ICML/Chapters";
+if [ ! -d $filename"-ICML/Chapters" ]; then
+  mkdir -p $filename"-ICML/Chapters";
 fi
 
 # create a ICML version of the entire book
-pandoc -s --from epub --to icml -o "COMPLETE_"$fileepub.icml $fileepub
+pandoc -s --from epub --to icml -o "COMPLETE_"$filename.icml $fileepub
 # move the file to the Text directory
-mv "COMPLETE_"$fileepub.icml $fileepub".ICML"
-
+mv "COMPLETE_"$filename.icml $filename"-ICML"
 
 # create a copy for processing
 cp $fileepub ./temp/book.epub
@@ -31,17 +33,18 @@ cd ./temp
 unzip ./book.epub
 
 # copy fonts, css and images to ICML folder
-cp -R ./OEBPS/Fonts ../$fileepub".ICML/"
-cp -R ./OEBPS/Images ../$fileepub".ICML/"
-cp -R ./OEBPS/Styles ../$fileepub".ICML/"
+cp -R ./OEBPS/Fonts ../$filename"-ICML/"
+cp -R ./OEBPS/Images ../$filename"-ICML/"
+cp -R ./OEBPS/Styles ../$filename"-ICML/"
 
 # move to where the HTML files are
 cd ./OEBPS/Text/
 
-for filename in ./*.xhtml; do
-    ls -l $filename
-    pandoc -s --from html --to icml -o $filename.icml $filename
-    mv $filename.icml ../../../$fileepub".ICML/Chapters/"
+for chapterxhtml in *.xhtml; do
+    # new chapter name without xhtml ending
+    chaptername=$(echo $chapterxhtml | cut -f 1 -d '.')
+    pandoc -s --from html --to icml -o $chaptername.icml $chapterxhtml
+    mv $chaptername.icml ../../../$filename"-ICML/Chapters/"
 done
 
 # move back up outside temp directory
@@ -51,5 +54,5 @@ cd ../../../
 rm -rf ./temp
 
 # create zip for ICML files and remove folder
-zip -0r $fileepub.icml.zip ./$fileepub".ICML/"
-rm -rf ./$fileepub".ICML/"
+zip -0r $filename-ICML.zip ./$filename"-ICML/"
+rm -rf ./$filename"-ICML/"

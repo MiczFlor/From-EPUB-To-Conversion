@@ -7,20 +7,23 @@
 fileepub=$1
 echo "Converting file: " $fileepub
 
+# new file name without epub ending
+filename=$(echo $fileepub | cut -f 1 -d '.')
+
 # create temporary working directory
 if [ ! -d temp ]; then
   mkdir -p temp;
 fi
 
 # create DOCX directory
-if [ ! -d $fileepub".DOCX/Chapters" ]; then
-  mkdir -p $fileepub".DOCX/Chapters";
+if [ ! -d $filename"-DOCX/Chapters" ]; then
+  mkdir -p $filename"-DOCX/Chapters";
 fi
 
 # create a DOCX version of the entire book
-pandoc -s --from epub --to docx -o "COMPLETE_"$fileepub.docx $fileepub
+pandoc -s --from epub --to docx -o "COMPLETE_"$filename.docx $fileepub
 # move the file to the Text directory
-mv "COMPLETE_"$fileepub.docx $fileepub".DOCX"
+mv "COMPLETE_"$filename.docx $filename"-DOCX"
 
 # create a copy for processing
 cp $fileepub ./temp/book.epub
@@ -30,17 +33,18 @@ cd ./temp
 unzip ./book.epub
 
 # copy fonts, css and images to DOCX folder
-cp -R ./OEBPS/Fonts ../$fileepub".DOCX/"
-cp -R ./OEBPS/Images ../$fileepub".DOCX/"
-cp -R ./OEBPS/Styles ../$fileepub".DOCX/"
+cp -R ./OEBPS/Fonts ../$filename"-DOCX/"
+cp -R ./OEBPS/Images ../$filename"-DOCX/"
+cp -R ./OEBPS/Styles ../$filename"-DOCX/"
 
 # move to where the HTML files are
 cd ./OEBPS/Text/
 
-for filename in ./*.xhtml; do
-    ls -l $filename
-    pandoc -s --from html --to docx -o $filename.docx $filename
-    mv $filename.docx ../../../$fileepub".DOCX/Chapters/"
+for chapterxhtml in *.xhtml; do
+    # new chapter name without xhtml ending
+    chaptername=$(echo $chapterxhtml | cut -f 1 -d '.')
+    pandoc -s --from html --to docx -o $chaptername.docx $chapterxhtml
+    mv $chaptername.docx ../../../$filename"-DOCX/Chapters/"
 done
 
 # move back up outside temp directory
@@ -50,5 +54,5 @@ cd ../../../
 rm -rf ./temp
 
 # create zip for DOCX files
-zip -0r $fileepub.docx.zip ./$fileepub".DOCX/"
-rm -rf ./$fileepub".DOCX/"
+zip -0r $filename-DOCX.zip ./$filename"-DOCX/"
+rm -rf ./$filename"-DOCX/"

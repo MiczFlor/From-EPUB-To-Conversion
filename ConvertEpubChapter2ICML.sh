@@ -1,5 +1,8 @@
 #!/bin/bash
-
+#
+# MIT license
+# https://github.com/MiczFlor/From-EPUB-To-Conversion
+#
 # execute in the directory where the epub is with the epub filename in the command line like this:
 # ./ConvertEpubChapter2ICML.sh charles-dickens-weihnachtsgeschichten_2016-11-28_12-06-08.epub
 
@@ -55,7 +58,9 @@ rm -rf ./temp
 
 # write some additional ICML information to text file
 
-echo "1. What is an ICML file?
+echo "Tested with InDesign CC 2017
+
+1. What is an ICML file?
 
 ICML stands for InCopy Markup Language. It is a standard defined
 by Adobe allowing the easy migration of content between InDesign

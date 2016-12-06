@@ -1,5 +1,8 @@
 #!/bin/bash
-
+#
+# MIT license
+# https://github.com/MiczFlor/From-EPUB-To-Conversion
+#
 # execute in the directory where the epub is with the epub filename in the command line like this:
 # ./ConvertEpubChapter2DOCX.sh charles-dickens-weihnachtsgeschichten_2016-11-28_12-06-08.epub
 

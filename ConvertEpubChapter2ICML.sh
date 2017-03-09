@@ -3,15 +3,37 @@
 # MIT license
 # https://github.com/MiczFlor/From-EPUB-To-Conversion
 #
-# execute in the directory where the epub is with the epub filename in the command line like this:
-# ./ConvertEpubChapter2ICML.sh charles-dickens-weihnachtsgeschichten_2016-11-28_12-06-08.epub
+# USAGE EXAMPLES:
+# ../ConvertEpubChapter2ICML.sh -i ../test-booktype.epub -o ../tests/test-booktype-ICML.zip
+# ../ConvertEpubChapter2ICML.sh --in ../test-booktype.epub --out ../tests/test-booktype-ICML.zip
 
-# read file from input
-fileepub=$1
-echo "Converting file: " $fileepub
+# read parameters from input
+while [[ $# -gt 1 ]]
+do
+key="$1"
 
-# new file name without epub ending
-filename=$(echo $fileepub | cut -f 1 -d '.')
+case $key in
+    -i|--in)
+    SOURCE="$2"
+    shift # past argument
+    ;;
+    -o|--out)
+    TARGET="$2"
+    shift # past argument
+    ;;
+    *)
+esac
+shift # past argument or value
+done
+
+filename=$(basename "$TARGET")
+TARGETEXTENSION="${filename##*.}"
+TARGETFILENAME="${filename%.*}"
+
+#echo SOURCE             = $SOURCE
+#echo TARGET             = $TARGET
+#echo TARGETEXTENSION    = $TARGETEXTENSION
+#echo TARGETFILENAME     = $TARGETFILENAME
 
 # create temporary working directory
 if [ ! -d temp ]; then
@@ -19,26 +41,26 @@ if [ ! -d temp ]; then
 fi
 
 # create ICML directory
-if [ ! -d $filename"-ICML/Chapters" ]; then
-  mkdir -p $filename"-ICML/Chapters";
+if [ ! -d $TARGETFILENAME"-ICML/Chapters" ]; then
+  mkdir -p $TARGETFILENAME"-ICML/Chapters";
 fi
 
 # create a ICML version of the entire book
-pandoc -s --from epub --to icml -o "COMPLETE_"$filename.icml $fileepub
+pandoc -s --from epub --to icml -o "COMPLETE_"$TARGETFILENAME.icml $SOURCE
 # move the file to the Text directory
-mv "COMPLETE_"$filename.icml $filename"-ICML"
+mv "COMPLETE_"$TARGETFILENAME.icml $TARGETFILENAME"-ICML"
 
 # create a copy for processing
-cp $fileepub ./temp/book.epub
+cp $SOURCE ./temp/book.epub
 
 # unzip epub
 cd ./temp
 unzip ./book.epub
 
 # copy fonts, css and images to ICML folder
-cp -R ./OEBPS/Fonts ../$filename"-ICML/"
-cp -R ./OEBPS/Images ../$filename"-ICML/"
-cp -R ./OEBPS/Styles ../$filename"-ICML/"
+cp -R ./OEBPS/Fonts ../$TARGETFILENAME"-ICML/"
+cp -R ./OEBPS/Images ../$TARGETFILENAME"-ICML/"
+cp -R ./OEBPS/Styles ../$TARGETFILENAME"-ICML/"
 
 # move to where the HTML files are
 cd ./OEBPS/Text/
@@ -47,7 +69,7 @@ for chapterxhtml in *.xhtml; do
     # new chapter name without xhtml ending
     chaptername=$(echo $chapterxhtml | cut -f 1 -d '.')
     pandoc -s --from html --to icml -o $chaptername.icml $chapterxhtml
-    mv $chaptername.icml ../../../$filename"-ICML/Chapters/"
+    mv $chaptername.icml ../../../$TARGETFILENAME"-ICML/Chapters/"
 done
 
 # move back up outside temp directory
@@ -123,8 +145,12 @@ updated automatically as the content of the ICML file changes.
 3.1. Unlink ICML file
 
 * Select 'Links' to show all linked files.
-* Locate the ICML file and simply 'unlink' it." >> $filename"-ICML/HOWTO.txt"
+* Locate the ICML file and simply 'unlink' it." >> $TARGETFILENAME"-ICML/HOWTO.txt"
 
 # create zip for ICML files and remove folder
-zip -0r $filename-ICML.zip ./$filename"-ICML/"
-rm -rf ./$filename"-ICML/"
+zip -0r $TARGETFILENAME-ICML.zip ./$TARGETFILENAME"-ICML/"
+# delete working folder
+rm -rf ./$TARGETFILENAME"-ICML/"
+
+# move file to target
+mv $TARGETFILENAME-ICML.zip $TARGET

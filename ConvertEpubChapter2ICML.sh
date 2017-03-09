@@ -111,7 +111,7 @@ Create document by clicking 'OK'.
 2.3. Place document
 
 Place the ICML document in the first page of the new document.
-Click 'Open' to import the content.
+Select 'Place' to import the ICML content.
 
 3. Linked ICML file
 

@@ -21,6 +21,10 @@ case $key in
     TARGET="$2"
     shift # past argument
     ;;
+    -p)
+    PANDOC="$2"
+    shift # past argument
+    ;;
     *)
 esac
 shift # past argument or value
@@ -46,7 +50,7 @@ if [ ! -d $TARGETFILENAME"-ICML/Chapters" ]; then
 fi
 
 # create a ICML version of the entire book
-pandoc -s --from epub --to icml -o "COMPLETE_"$TARGETFILENAME.icml $SOURCE
+${PANDOC:-"pandoc"} -s --from epub --to icml -o "COMPLETE_"$TARGETFILENAME.icml $SOURCE
 # move the file to the Text directory
 mv "COMPLETE_"$TARGETFILENAME.icml $TARGETFILENAME"-ICML"
 
@@ -68,7 +72,7 @@ cd ./OEBPS/Text/
 for chapterxhtml in *.xhtml; do
     # new chapter name without xhtml ending
     chaptername=$(echo $chapterxhtml | cut -f 1 -d '.')
-    pandoc -s --from html --to icml -o $chaptername.icml $chapterxhtml
+    ${PANDOC:-"pandoc"} -s --from html --to icml -o $chaptername.icml $chapterxhtml
     mv $chaptername.icml ../../../$TARGETFILENAME"-ICML/Chapters/"
 done
 
@@ -99,19 +103,19 @@ In other words: If you have a book layout in InDesign, you can
 add content in chapters - or entire books - by placing ICML
 content inside your project.
 
-This is similar to placing DOCX files in InDesign with one major 
-advantage: the images referenced in ICML are 'raw' whereas the 
+This is similar to placing DOCX files in InDesign with one major
+advantage: the images referenced in ICML are 'raw' whereas the
 DOCX images are embedded in the DOCX file - and depending on the
-editor that was used to create the DOCX file, you never quite 
+editor that was used to create the DOCX file, you never quite
 know what conversion has been applied to the image.
 
-If you start from scratch, follow the below step to import an 
+If you start from scratch, follow the below step to import an
 entire book into a new InDesign document.
 
 2. Adding pages automatically when importing ICML
 
 InDesign's 'Smart Text Reflow' functionality allows to automatically
-create pages when importing a document, such as an ICML file. Here 
+create pages when importing a document, such as an ICML file. Here
 is a simple example, assuming you start a new document:
 
 2.1. Create new document
@@ -125,7 +129,7 @@ Create document by clicking 'OK'.
 * Select 'Preferences > Type...' from the dropdown menu.
 * Activate the 'Smart Text Reflow' section.
 * Select where you want pages to be added automatically.
-* Select if you want to 'Limit to primary text frames' or also 
+* Select if you want to 'Limit to primary text frames' or also
   reflow into other text frames.
 * You can also select if empty pages should be deleted.
 * Click 'OK' to close the preferences.
@@ -137,9 +141,9 @@ Select 'Place' to import the ICML content.
 
 3. Linked ICML file
 
-The ICML file is linked to InDesign. This means that changes made 
-in the ICML file are reflected in InDesign. You can break this link, 
-if you are sure that you don't want your InDesign document to be 
+The ICML file is linked to InDesign. This means that changes made
+in the ICML file are reflected in InDesign. You can break this link,
+if you are sure that you don't want your InDesign document to be
 updated automatically as the content of the ICML file changes.
 
 3.1. Unlink ICML file
@@ -154,3 +158,4 @@ rm -rf ./$TARGETFILENAME"-ICML/"
 
 # move file to target
 mv $TARGETFILENAME-ICML.zip $TARGET
+

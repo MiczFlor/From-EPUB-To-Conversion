@@ -4,12 +4,8 @@
 # https://github.com/MiczFlor/From-EPUB-To-Conversion
 #
 # USAGE EXAMPLES:
-# ../ConvertEpubChapter2ICML.sh -i ../test-booktype.epub -o ../tests/test-booktype-ICML.zip
-# ../ConvertEpubChapter2ICML.sh --in ../test-booktype.epub --out ../tests/test-booktype-ICML.zip
-# 
-# to specify absolute path to 'pandoc' use like this (this is optional):
-# ../ConvertEpubChapter2ICML.sh -p /usr/bin/pandoc -i ../test-booktype.epub -o ../tests/test-booktype-ICML.zip
-# ../ConvertEpubChapter2ICML.sh --pandoc /usr/bin/pandoc --in ../test-booktype.epub --out ../tests/test-booktype-ICML.zip
+# bash ConvertEpubChapter2ICML.sh -i {epub-file-path} -o {output-zip-file-path} -p {pandoc-executable-path} -t {temp-dit-path}
+# bash ConvertEpubChapter2ICML.sh --in {epub-file-path} --out {output-zip-file-path} -p {pandoc-executable-path} -t {temp-dit-path}
 
 # read parameters from input
 while [[ $# -gt 1 ]]
@@ -19,15 +15,19 @@ key="$1"
 case $key in
     -i|--in)
     SOURCE="$2"
-    shift # past argument
+    shift
     ;;
     -o|--out)
     TARGET="$2"
-    shift # past argument
+    shift
     ;;
-    -p|--pandoc)
+    -p)
     PANDOC="$2"
-    shift # past argument
+    shift
+    ;;
+    -t)
+    TEMPDIR="$2"
+    shift
     ;;
     *)
 esac
@@ -37,57 +37,70 @@ done
 filename=$(basename "$TARGET")
 TARGETEXTENSION="${filename##*.}"
 TARGETFILENAME="${filename%.*}"
+TEMPDIR="${TEMPDIR}"
+PANDOC="${PANDOC:-"pandoc"}"
+ICMLFOLDER=$TEMPDIR"/"$TARGETFILENAME
 
-#echo SOURCE             = $SOURCE
-#echo TARGET             = $TARGET
-#echo TARGETEXTENSION    = $TARGETEXTENSION
-#echo TARGETFILENAME     = $TARGETFILENAME
+printf '%s\n'
+echo INITIAL VARIABLES
+printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
+echo SOURCE === $SOURCE
+echo TARGET === $TARGET
+echo TARGET EXTENSION === $TARGETEXTENSION
+echo TARGET FILENAME === $TARGETFILENAME
+echo PANDOC EXECUTABLE === $PANDOC
+echo TEMP DIR === $TEMPDIR
+printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
+printf '%s\n'
 
-# create temporary working directory
-if [ ! -d temp ]; then
-  mkdir -p temp;
+echo '-------'CREATE TEMP DIR
+if [ ! -d $TEMPDIR ]; then
+  mkdir -p $TEMPDIR;
 fi
+echo '-------'DONE
+printf '%s\n'
 
-# create ICML directory
-if [ ! -d $TARGETFILENAME"/Chapters" ]; then
-  mkdir -p $TARGETFILENAME"/Chapters";
+echo '-------'CREATE ICML DIR
+if [ ! -d $ICMLFOLDER"/Chapters" ]; then
+  mkdir -p $ICMLFOLDER"/Chapters";
 fi
+echo '-------'DONE
+printf '%s\n'
 
-# create a ICML version of the entire book
-${PANDOC:-"pandoc"} -s --from epub --to icml -o "COMPLETE_"$TARGETFILENAME.icml $SOURCE
-# move the file to the Text directory
-mv "COMPLETE_"$TARGETFILENAME.icml $TARGETFILENAME
+echo '-------'RUN PANDOC
+$PANDOC -s --from epub --to icml -o $ICMLFOLDER"/COMPLETE_"$TARGETFILENAME.icml $SOURCE
+echo '-------'DONE
+printf '%s\n'
 
-# create a copy for processing
-cp $SOURCE ./temp/book.epub
+echo '-------'COPY EPUB TO TEMP
+cp $SOURCE $TEMPDIR"/"source.epub
+echo '-------'DONE
+printf '%s\n'
 
-# unzip epub
-cd ./temp
-unzip ./book.epub
+echo '-------'UNZIP SOURCE EPUB
+cd $TEMPDIR
+unzip ./source.epub
+echo '-------'DONE
+printf '%s\n'
 
-# copy fonts, css and images to ICML folder
-cp -R ./OEBPS/Fonts ../$TARGETFILENAME"/"
-cp -R ./OEBPS/Images ../$TARGETFILENAME"/"
-cp -R ./OEBPS/Styles ../$TARGETFILENAME"/"
+echo '-------'COPY FONTS, CSS AND IMAGES TO ICML FOLDER
+cp -R ./OEBPS/Fonts $ICMLFOLDER
+cp -R ./OEBPS/Images $ICMLFOLDER
+cp -R ./OEBPS/Styles $ICMLFOLDER
+echo '-------'DONE
+printf '%s\n'
 
-# move to where the HTML files are
+echo '-------'RUN PANDOC FOR EACH CHAPTER
 cd ./OEBPS/Text/
-
 for chapterxhtml in *.xhtml; do
-    # new chapter name without xhtml ending
+    # chapter name without xhtml ending
     chaptername=$(echo $chapterxhtml | cut -f 1 -d '.')
-    ${PANDOC:-"pandoc"} -s --from html --to icml -o $chaptername.icml $chapterxhtml
-    mv $chaptername.icml ../../../$TARGETFILENAME"/Chapters/"
+    $PANDOC -s --from html --to icml -o $ICMLFOLDER"/Chapters/"$chaptername.icml $chapterxhtml
 done
+echo '-------'DONE
+printf '%s\n'
 
-# move back up outside temp directory
-cd ../../../
-
-# delete everything in temp folder
-rm -rf ./temp
-
-# write some additional ICML information to text file
-
+echo '-------'GENERATE HOWTO.txt FILE
 echo "Tested with InDesign CC 2017
 
 1. What is an ICML file?
@@ -153,13 +166,19 @@ updated automatically as the content of the ICML file changes.
 3.1. Unlink ICML file
 
 * Select 'Links' to show all linked files.
-* Locate the ICML file and simply 'unlink' it." >> $TARGETFILENAME"/HOWTO.txt"
+* Locate the ICML file and simply 'unlink' it." >> $ICMLFOLDER"/HOWTO.txt"
+echo '-------'DONE
+printf '%s\n'
 
-# create zip for ICML files and remove folder
-zip -0r $TARGETFILENAME.zip ./$TARGETFILENAME"/"
-# delete working folder
-rm -rf ./$TARGETFILENAME"/"
+echo '-------'CREATE ZIP
+cd $TEMPDIR
+zip -0r $TARGET ./$TARGETFILENAME"/"
+echo '-------'DONE
+printf '%s\n'
 
-# move file to target
-mv $TARGETFILENAME.zip $TARGET
-
+echo '-------'DELETE TEMP DIR
+cd $TEMPDIR
+cd ../
+rm -rf $TEMPDIR
+echo '-------'DONE
+printf '%s\n'
